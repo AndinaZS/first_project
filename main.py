@@ -1,6 +1,7 @@
 import requests
 from pprint import pprint
 from datetime import datetime
+import json
 
 with open('tok.txt', 'r') as file:
     token_ya = file.readline().strip()
@@ -16,12 +17,15 @@ def get_url_foto(ownerID, num=5):
     'access_token': token_vk,
     'v':'5.131'}
     res = requests.get(url, params=params).json()['response']['items']
-    for elem in res:
-        if dct.get(str(elem['likes']['count']), 0):
-            date = datetime.utcfromtimestamp(elem['date']).strftime('%d-%m-%Y')
-            dct[str(elem['likes']['user_likes']) + str(date)] = elem['sizes'][-1]['url']
-        else:
-            dct[str(elem['likes']['count'])] = elem['sizes'][-1]['url']
+    with open("data_file.json", "w") as write_file:
+        for elem in res:
+            if dct.get(str(elem['likes']['count']), 0):
+                date = datetime.utcfromtimestamp(elem['date']).strftime('%d-%m-%Y')
+                file_name = str(elem['likes']['user_likes']) + str(date)
+            else:
+                file_name = str(elem['likes']['count'])
+            dct[file_name] = elem['sizes'][-1]['url']
+            json.dump({'file_name': f'{file_name}.jpg', 'size': elem['sizes'][-1]['type']}, write_file)
     return dct
 
 def create_folder(folder_name):
