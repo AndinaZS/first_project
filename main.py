@@ -19,11 +19,10 @@ def get_url_foto(ownerID, num=5):
     for elem in res:
         if dct.get(str(elem['likes']['count']), 0):
             date = datetime.utcfromtimestamp(elem['date']).strftime('%d-%m-%Y')
-            dct[str(elem['likes']['count']) + str(date)] = elem['sizes'][-1]['url']
+            dct[str(elem['likes']['user_likes']) + str(date)] = elem['sizes'][-1]['url']
         else:
             dct[str(elem['likes']['count'])] = elem['sizes'][-1]['url']
     return dct
-
 
 def create_folder(folder_name):
     upload_url = "https://cloud-api.yandex.net/v1/disk/resources"
@@ -35,9 +34,12 @@ def upload_foto(dct_foto):
     upload_url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
     headers = {'Content-Type': 'application/json',
             'Authorization': f'OAuth {token_ya}'}
-    params = {"url": 'https://sun9-29.userapi.com/c5130/u1565606/-6/m_40291f0b.jpg', 'path':'Новая папка/1'}
-    response = requests.post(upload_url, headers=headers, params=params)
-    pprint(response.status_code)
+    for key, value in dct_foto.items():
+        params = {"url": value, 'path':f'1565606/{key}'}
+        response = requests.post(upload_url, headers=headers, params=params)
+        pprint(response.status_code)
 
 if __name__ == '__main__':
-    pprint(get_url_foto('1565606', 10))
+    dct = get_url_foto('1565606', 10)
+    create_folder('1565606')
+    upload_foto(dct)
