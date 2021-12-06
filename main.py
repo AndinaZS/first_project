@@ -23,10 +23,10 @@ class Vk_To_Yandex:
         func_url = self.vk_url + 'photos.getAlbums/'
         response = requests.get(func_url, params=self.params_vk).json()
         if response.get('error', 0):
-            print('Информация надоступна. Попробуййте загрузить фото из служебных альбомов "profile", "wall", "saved"')
+            print('Информация надоступна. Попробуйте загрузить фото из служебных альбомов "profile", "wall", "saved"')
         else:
             for elem in response['response']['items']:
-                print(f'ID {elem["id"]} название {elem["title"]}')
+              print(f'ID {elem["id"]} название {elem["title"]}')
         return
 
     def save_foto(self, album_id='profile', num=5):
@@ -38,10 +38,11 @@ class Vk_To_Yandex:
         }
         response = requests.get(func_url, params={**self.params_vk, **func_params}).json()
         if response.get('error', 0):
-            print('Что-то пошло не так. Возможно, пользователь ограничил доступ к фото')
+            print('Что-то пошло не так. Возможно, пользователь ограничил доступ к фото или альбома не существует.')
         else:
             self.__create_folder(album_id)
             self.__create_json(response['response']['items'], album_id)
+        return
 
     def __create_json(self, response, album_id):
         file_name = self.owner_id + album_id
@@ -56,6 +57,7 @@ class Vk_To_Yandex:
                 self.__upload_foto(url=elem['sizes'][-1]['url'],file_name=file_name)
                 json.dump({'file_name': f'{file_name}.jpg', 'size': elem['sizes'][-1]['type']}, write_file)
                 set_filenames.add(file_name)
+        return
 
     def __create_folder(self, album_id):
         func_url = self.ya_url
@@ -63,21 +65,23 @@ class Vk_To_Yandex:
         headers = self.headers_ya
         params = {'path': folder_name}
         response = requests.put(func_url, headers=headers, params=params)
+        return
 
     def __upload_foto(self, url, file_name):
         upload_url = self.ya_url + 'upload'
         headers = self.headers_ya
-        params = {"url": url, 'path':f'{self.owner_id}/{file_name}'}
+        params = {"url": url, 'path':f'{self.owner_id}\{file_name}'}
         response = requests.post(upload_url, headers=headers, params=params)
         if response.status_code == 202:
             print(f'файл {file_name}.jpg загружен')
         else:
             print(f'ошибка при згрузке файла {file_name}.jpg')
+        return
 
 if __name__ == '__main__':
-    test = Vk_To_Yandex(token_vk, token_ya,'6827002')
-    pprint(test.get_albums())
-    # test.save_foto('147059587')
+    test = Vk_To_Yandex(token_vk, token_ya,'14416629')
+    test.get_albums()
+    test.save_foto('profile')
 
 
 
