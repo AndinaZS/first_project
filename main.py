@@ -22,7 +22,12 @@ class Vk_To_Yandex:
     def get_albums(self):
         func_url = self.vk_url + 'photos.getAlbums/'
         response = requests.get(func_url, params=self.params_vk).json()
-        return(response)
+        if response.get('error', 0):
+            print('Информация надоступна. Попробуййте загрузить фото из служебных альбомов "profile", "wall", "saved"')
+        else:
+            for elem in response['response']['items']:
+                print(f'ID {elem["id"]} название {elem["title"]}')
+        return
 
     def save_foto(self, album_id='profile', num=5):
         func_url = self.vk_url + 'photos.get/'
@@ -37,7 +42,6 @@ class Vk_To_Yandex:
         else:
             self.__create_folder(album_id)
             self.__create_json(response['response']['items'], album_id)
-        return
 
     def __create_json(self, response, album_id):
         file_name = self.owner_id + album_id
@@ -52,7 +56,6 @@ class Vk_To_Yandex:
                 self.__upload_foto(url=elem['sizes'][-1]['url'],file_name=file_name)
                 json.dump({'file_name': f'{file_name}.jpg', 'size': elem['sizes'][-1]['type']}, write_file)
                 set_filenames.add(file_name)
-        return
 
     def __create_folder(self, album_id):
         func_url = self.ya_url
@@ -60,7 +63,6 @@ class Vk_To_Yandex:
         headers = self.headers_ya
         params = {'path': folder_name}
         response = requests.put(func_url, headers=headers, params=params)
-        return
 
     def __upload_foto(self, url, file_name):
         upload_url = self.ya_url + 'upload'
@@ -71,7 +73,6 @@ class Vk_To_Yandex:
             print(f'файл {file_name}.jpg загружен')
         else:
             print(f'ошибка при згрузке файла {file_name}.jpg')
-        return
 
 if __name__ == '__main__':
     test = Vk_To_Yandex(token_vk, token_ya,'6827002')
