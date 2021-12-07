@@ -1,7 +1,6 @@
 import requests
 from datetime import datetime
 import json
-import os
 
 with open('tokens.txt', 'r') as file:
     token_ya = file.readline().strip()
@@ -33,7 +32,13 @@ class Vk_To_Yandex:
               print(f'ID {elem["id"]} название {elem["title"]}')
         return
 
-    def save_foto(self, album_id='profile', num=5):
+    def save_foto(self, album_id='profile'):
+        num = input('Какое количество фото вы хотите загрузить (от 1 до 1000): ')
+        if not num.isdigit() or  1000 < int(num) <1:
+            num = 5
+            print('Вы ввели неверное значение. Будут загружены 5 фото')
+        else:
+            num = int(num)
         self.path = self.owner_id + album_id
         func_url = self.vk_url + 'photos.get/'
         func_params = {
@@ -58,18 +63,19 @@ class Vk_To_Yandex:
         return
 
     def __create_json(self, response):
+        data_json = []
+        set_filenames = set()
+        for elem in response:
+            if str(elem['likes']['count']) in set_filenames:
+                date = datetime.utcfromtimestamp(elem['date']).strftime('%d-%m-%Y')
+                file_name = str(elem['likes']['user_likes']) + str(date)
+            else:
+                file_name = str(elem['likes']['count'])
+            self.__upload_foto(url=elem['sizes'][-1]['url'],file_name=file_name)
+            data_json.append({'file_name': f'{file_name}.jpg', 'size': elem['sizes'][-1]['type']})
+            set_filenames.add(file_name)
         with open(f'{self.path}.json', 'w') as write_file:
-            set_filenames = set()
-            for elem in response:
-                if str(elem['likes']['count']) in set_filenames:
-                    date = datetime.utcfromtimestamp(elem['date']).strftime('%d-%m-%Y')
-                    file_name = str(elem['likes']['user_likes']) + str(date)
-                else:
-                    file_name = str(elem['likes']['count'])
-                self.__upload_foto(url=elem['sizes'][-1]['url'],file_name=file_name)
-                json.dump({'file_name': f'{file_name}.jpg', 'size': elem['sizes'][-1]['type']}, write_file)
-                set_filenames.add(file_name)
-        self.__upload_json()
+            json.dump(data_json, write_file, indent=2)
         return
 
     def __upload_foto(self, url, file_name):
@@ -82,20 +88,6 @@ class Vk_To_Yandex:
         else:
             print(f'ошибка при згрузке файла {file_name}.jpg')
         return
-
-    def __upload_json(self):
-        upload_url = self.ya_url + 'upload'
-        file = f'{self.path}.json'
-        params = {'path': file}
-        response = requests.get(upload_url, headers=self.headers_ya, params=params).json()
-        href = response.get("href", "")
-        requests.put(href, data=open(file, 'rb'))
-        move_url = self.ya_url + 'move'
-        params_move = {'from': file, 'path': f'{self.path}/'+ file}
-        response = requests.post(move_url, headers=self.headers_ya, params=params_move)
-        os.remove(file)
-        return
-
 
 if __name__ == '__main__':
     test = Vk_To_Yandex(token_vk, token_ya,'1565606')
